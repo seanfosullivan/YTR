@@ -1,0 +1,19 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: file-downloader
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: file-downloader
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: file-downloader
+  endpoints:
+    - port: metrics
+      path: {{ .Values.monitoring.metricsPath }}
+      interval: 30s
+      scrapeTimeout: 10s
+{{- end }}

@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: rss-feed
+  tag: v1
+  pullPolicy: IfNotPresent
+
+minio:
+  endpoint: "minio:9000"
+  rawVideosBucket: "raw-videos"
+  secure: false
+
+ingress:
+  host: rss-feed.local
+  baseUrl: "http://rss-feed.local"
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  metricsPort: 9090
+  metricsPath: /metrics

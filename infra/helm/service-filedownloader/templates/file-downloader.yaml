@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: file-downloader
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: file-downloader
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: file-downloader
+  template:
+    metadata:
+      labels:
+        app: file-downloader
+      {{- if .Values.monitoring.enabled }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ .Values.monitoring.metricsPort | quote }}
+        prometheus.io/path: {{ .Values.monitoring.metricsPath }}
+      {{- end }}
+    spec:
+      serviceAccountName: service-filedownloader-sa
+      containers:
+        - name: file-downloader
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+              name: http
+            {{- if .Values.monitoring.enabled }}
+            - containerPort: {{ .Values.monitoring.metricsPort }}
+              name: metrics
+            {{- end }}
+          env:
+            - name: MINIO_ENDPOINT
+              value: {{ .Values.minio.endpoint | quote }}
+            - name: RAW_VIDEOS_BUCKET
+              value: {{ .Values.minio.rawVideosBucket | quote }}
+            - name: MINIO_SECURE
+              value: {{ ternary "true" "false" .Values.minio.secure | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ include "minio.fullname" . }}-creds
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: file-downloader
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: file-downloader
+spec:
+  selector:
+    app: file-downloader
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+    {{- if .Values.monitoring.enabled }}
+    - port: {{ .Values.monitoring.metricsPort }}
+      targetPort: {{ .Values.monitoring.metricsPort }}
+      name: metrics
+    {{- end }}
+
+

@@ -1,0 +1,46 @@
+namespace:
+  name: ytr
+
+# Production-specific monitoring overrides
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      retention: 90d
+      resources:
+        requests:
+          memory: 4Gi
+          cpu: 2000m
+        limits:
+          memory: 8Gi
+          cpu: 4000m
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 500Gi
+  
+  grafana:
+    ingress:
+      hosts:
+        - grafana.ytr.example.com  # Update with your actual domain
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"  # If using cert-manager
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    persistence:
+      enabled: true
+      size: 50Gi
+  
+  # Enable Alertmanager in production
+  alertmanager:
+    enabled: true
+    alertmanagerSpec:
+      retention: 120h
+      storage:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 50Gi

@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/minio/minio
+  tag: latest
+  pullPolicy: IfNotPresent
+
+rootUser: minioadmin
+rootPassword: minioadmin
+
+service:
+  type: ClusterIP
+  port: 9000
+  consolePort: 9090
+
+buckets:
+  - raw-videos
+
+# Monitoring configuration
+monitoring:
+  enabled: true

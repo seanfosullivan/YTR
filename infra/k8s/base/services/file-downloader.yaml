@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: file-downloader
+  namespace: ytr
+  labels:
+    app: file-downloader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: file-downloader
+  template:
+    metadata:
+      labels:
+        app: file-downloader
+    spec:
+      serviceAccountName: file-downloader-sa
+      containers:
+        - name: file-downloader
+          image: file-downloader:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: MINIO_ENDPOINT
+              value: "minio:9000"
+            - name: RAW_VIDEOS_BUCKET
+              value: "raw-videos"
+            - name: MINIO_SECURE
+              value: "false"
+          envFrom:
+            - secretRef:
+                name: minio-creds
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: file-downloader
+  namespace: ytr
+  labels:
+    app: file-downloader
+spec:
+  selector:
+    app: file-downloader
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+
+

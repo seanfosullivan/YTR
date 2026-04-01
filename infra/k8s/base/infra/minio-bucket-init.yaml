@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-bucket-init
+  namespace: ytr
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: minio/mc:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until mc alias set minio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}; do
+                echo "Waiting for MinIO..."
+                sleep 2
+              done
+              mc mb minio/raw-videos --ignore-existing || true
+              echo "Bucket 'raw-videos' ready"
+          envFrom:
+            - secretRef:
+                name: minio-creds
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: minio-bucket-init
+  namespace: ytr
+

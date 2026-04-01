@@ -1,0 +1,93 @@
+namespace:
+  name: ytr
+
+service-filedownloader:
+  replicaCount: 1
+
+service-rssfeed:
+  replicaCount: 1
+  minio:
+    endpoint: "minio:9000"
+    rawVideosBucket: "raw-videos"
+    secure: false
+  ingress:
+    host: rss-feed.local
+    baseUrl: "http://rss-feed.local"
+
+minio:
+  replicaCount: 1
+  buckets:
+    - raw-videos
+
+# Prometheus & Grafana monitoring stack
+kube-prometheus-stack:
+  # Install Prometheus Operator
+  prometheusOperator:
+    enabled: true
+    # Ensure CRDs are managed by the chart
+    manageCrds: true
+  
+  # Prometheus configuration
+  prometheus:
+    enabled: true
+    prometheusSpec:
+      # Scrape configs for our services
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+      ruleSelectorNilUsesHelmValues: false
+      # Retention period for metrics
+      retention: 30d
+      # Resource limits
+      resources:
+        requests:
+          memory: 2Gi
+          cpu: 1000m
+        limits:
+          memory: 4Gi
+          cpu: 2000m
+      # Storage class (adjust for your cluster)
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 50Gi
+  
+  # Grafana configuration
+  grafana:
+    enabled: true
+    adminUser: admin
+    adminPassword: admin
+    # Ingress configuration
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hosts:
+        - grafana.local
+      annotations:
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # Resource limits
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    # Persistence for dashboards
+    persistence:
+      enabled: true
+      size: 10Gi
+  
+  # Alertmanager (optional, can enable later)
+  alertmanager:
+    enabled: false
+  
+  # Node exporter (for node metrics)
+  nodeExporter:
+    enabled: true
+  
+  # Kube-state-metrics (for Kubernetes object metrics)
+  kubeStateMetrics:
+    enabled: true

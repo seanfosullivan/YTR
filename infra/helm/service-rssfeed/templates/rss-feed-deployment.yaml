@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rss-feed
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: rss-feed
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: rss-feed
+  template:
+    metadata:
+      labels:
+        app: rss-feed
+      {{- if .Values.monitoring.enabled }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ .Values.monitoring.metricsPort | quote }}
+        prometheus.io/path: {{ .Values.monitoring.metricsPath }}
+      {{- end }}
+    spec:
+      serviceAccountName: service-rssfeed-sa
+      containers:
+        - name: rss-feed
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+              name: http
+            {{- if .Values.monitoring.enabled }}
+            - containerPort: {{ .Values.monitoring.metricsPort }}
+              name: metrics
+            {{- end }}
+          env:
+            - name: MINIO_ENDPOINT
+              value: {{ .Values.minio.endpoint | quote }}
+            - name: RAW_VIDEOS_BUCKET
+              value: {{ .Values.minio.rawVideosBucket | quote }}
+            - name: MINIO_SECURE
+              value: {{ ternary "true" "false" .Values.minio.secure | quote }}
+            - name: BASE_URL
+              value: {{ .Values.ingress.baseUrl | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ include "minio.fullname" . }}-creds

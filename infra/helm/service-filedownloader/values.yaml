@@ -1,0 +1,19 @@
+replicaCount: 1
+
+image:
+  repository: file-downloader
+  tag: v1
+  pullPolicy: IfNotPresent
+
+minio:
+  endpoint: "minio:9000"
+  rawVideosBucket: "raw-videos"
+  secure: false
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  # Metrics port (add this port to your service if exposing Prometheus metrics)
+  metricsPort: 9090
+  # Metrics path
+  metricsPath: /metrics

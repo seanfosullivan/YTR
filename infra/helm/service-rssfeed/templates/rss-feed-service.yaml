@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rss-feed
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: rss-feed
+spec:
+  selector:
+    app: rss-feed
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+    {{- if .Values.monitoring.enabled }}
+    - port: {{ .Values.monitoring.metricsPort }}
+      targetPort: {{ .Values.monitoring.metricsPort }}
+      name: metrics
+    {{- end }}

@@ -1,0 +1,30 @@
+namespace:
+  name: ytr-staging
+
+# Staging-specific monitoring overrides
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      retention: 15d
+      resources:
+        requests:
+          memory: 2Gi
+          cpu: 1000m
+        limits:
+          memory: 4Gi
+          cpu: 2000m
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 100Gi
+  
+  grafana:
+    ingress:
+      hosts:
+        - grafana-staging.local
+    persistence:
+      enabled: true
+      size: 20Gi

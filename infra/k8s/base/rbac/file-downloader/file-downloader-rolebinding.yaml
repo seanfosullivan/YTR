@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: file-downloader-rb
+  namespace: ytr
+subjects:
+  - kind: ServiceAccount
+    name: file-downloader-sa
+    namespace: ytr
+roleRef:
+  kind: Role
+  name: file-downloader-role
+  apiGroup: rbac.authorization.k8s.io

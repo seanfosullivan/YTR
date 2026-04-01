@@ -1,0 +1,15 @@
+dependencies:
+- name: service-filedownloader
+  repository: file://../service-filedownloader
+  version: 0.1.0
+- name: service-rssfeed
+  repository: file://../service-rssfeed
+  version: 0.1.0
+- name: minio
+  repository: file://../minio
+  version: 0.1.0
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 61.0.0
+digest: sha256:11260b3fa00b83a2be2745e83f70bde60f65076f7d86d7fb158690798ab0835d
+generated: "2026-01-15T15:18:04.203290587Z"

@@ -1,0 +1,20 @@
+apiVersion: v2
+name: platform
+description: Umbrella chart for the YTR platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
+dependencies:
+  - name: service-filedownloader
+    version: 0.1.0
+    repository: "file://../service-filedownloader"
+  - name: service-rssfeed
+    version: 0.1.0
+    repository: "file://../service-rssfeed"
+  - name: minio
+    version: 0.1.0
+    repository: "file://../minio"
+  - name: kube-prometheus-stack
+    version: 61.0.0
+    repository: https://prometheus-community.github.io/helm-charts
