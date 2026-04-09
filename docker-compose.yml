@@ -76,7 +76,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
       RAW_VIDEOS_BUCKET: raw-videos
       MINIO_SECURE: "false"
-      BASE_URL: "http://localhost:8001"
+      BASE_URL: "http://rss-feed:8000"
     depends_on:
       minio:
         condition: service_healthy

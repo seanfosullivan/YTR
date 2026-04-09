@@ -35,11 +35,14 @@ async def get_rss_feed() -> Response:
             for obj in minio.list_objects(bucket, recursive=True):
                 # Get object metadata
                 stat = minio.stat_object(bucket, obj.object_name)
+                meta = {k.lower(): v for k, v in (stat.metadata or {}).items()}
+                duration = int(meta.get("x-amz-meta-duration") or meta.get("duration") or 0)
                 objects.append({
                     "name": obj.object_name,
                     "size": stat.size,
                     "last_modified": stat.last_modified,
                     "content_type": stat.content_type or "video/mp4",
+                    "duration": duration,
                 })
         except S3Error as e:
             raise HTTPException(status_code=500, detail=f"Failed to list objects: {str(e)}") from e
@@ -54,6 +57,7 @@ async def get_rss_feed() -> Response:
             feed_title="YTR Video Feed",
             feed_description="RSS feed of all videos in the YTR platform",
             feed_link=f"{base_url}/rss",
+            base_url=base_url,
         )
         
         return Response(

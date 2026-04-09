@@ -1,4 +1,5 @@
 import os
+import re
 import tempfile
 from pathlib import Path
 
@@ -43,8 +44,12 @@ async def download_and_upload(url: str) -> dict:
         info = ydl.extract_info(url, download=True)
         video_id = info.get("id")
         ext = info.get("ext", "mp4")
-        filename = f"{video_id}.{ext}"
-        file_path = Path(tmp_dir) / filename
+        title = info.get("title") or video_id
+        safe_title = re.sub(r'[^\w\s\-]', '', title).strip()
+        safe_title = re.sub(r'[\s]+', '_', safe_title)[:100]
+        filename = f"{safe_title}.{ext}"
+        # yt-dlp still wrote the file using video_id, find it
+        file_path = Path(tmp_dir) / f"{video_id}.{ext}"
 
         if not file_path.exists():
             msg = "Downloaded file not found on disk"
@@ -53,12 +58,19 @@ async def download_and_upload(url: str) -> dict:
         minio = get_minio_client()
         bucket = get_raw_videos_bucket()
 
-        object_name = filename
+        duration = int(info.get("duration") or 0)
+        metadata = {
+            "x-amz-meta-title": info.get("title") or video_id,
+            "x-amz-meta-duration": str(duration),
+        }
+
+        object_name = filename  # stored in MinIO with the title-based name
         minio.fput_object(
             bucket_name=bucket,
             object_name=object_name,
             file_path=str(file_path),
             content_type="video/mp4",
+            metadata=metadata,
         )
 
     return {

@@ -1,59 +1,62 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from feedgen.feed import FeedGenerator
+
+
+def _format_duration(seconds: int) -> str:
+    """Convert seconds to HH:MM:SS for iTunes duration tag."""
+    h = seconds // 3600
+    m = (seconds % 3600) // 60
+    s = seconds % 60
+    return f"{h:02d}:{m:02d}:{s:02d}"
+
 
 def generate_rss_feed(
     videos: List[dict],
     feed_title: str,
     feed_description: str,
     feed_link: str,
+    base_url: str,
     feed_language: str = "en",
 ) -> str:
-    """
-    Generate an RSS feed from a list of videos.
-    
-    Args:
-        videos: List of video dicts with keys: name, size, last_modified, content_type
-        feed_title: Title of the RSS feed
-        feed_description: Description of the RSS feed
-        feed_link: Base URL for the RSS feed service
-        feed_language: Language code for the feed
-    
-    Returns:
-        RSS feed XML as string
-    """
     fg = FeedGenerator()
+    fg.load_extension("podcast")
     fg.title(feed_title)
     fg.description(feed_description)
     fg.link(href=feed_link, rel="self")
     fg.language(feed_language)
-    fg.lastBuildDate(datetime.utcnow())
-    
+    fg.lastBuildDate(datetime.now(timezone.utc))
+    fg.podcast.itunes_category("Technology")
+
     for video in videos:
         object_name = video["name"]
         size = video.get("size", 0)
         last_modified = video.get("last_modified")
         content_type = video.get("content_type", "video/mp4")
-        
-        # Generate video URL (proxy endpoint)
-        video_url = f"{feed_link.rstrip('/')}/video/{object_name}"
-        
-        # Create RSS item
+        duration = video.get("duration", 0)
+
+        video_url = f"{base_url.rstrip('/')}/video/{object_name}"
+        display_title = object_name.rsplit(".", 1)[0].replace("_", " ")
+
         fe = fg.add_entry()
-        fe.title(object_name)
+        fe.title(display_title)
         fe.link(href=video_url)
         fe.enclosure(url=video_url, length=str(size), type=content_type)
-        
+
+        if duration:
+            fe.podcast.itunes_duration(_format_duration(duration))
+
         if last_modified:
             if isinstance(last_modified, datetime):
+                if last_modified.tzinfo is None:
+                    last_modified = last_modified.replace(tzinfo=timezone.utc)
                 fe.pubDate(last_modified)
             else:
-                # Try to parse if it's a string
                 try:
                     fe.pubDate(datetime.fromisoformat(str(last_modified).replace("Z", "+00:00")))
                 except (ValueError, AttributeError):
-                    fe.pubDate(datetime.utcnow())
+                    fe.pubDate(datetime.now(timezone.utc))
         else:
-            fe.pubDate(datetime.utcnow())
-    
+            fe.pubDate(datetime.now(timezone.utc))
+
     return fg.rss_str(pretty=True).decode("utf-8")
